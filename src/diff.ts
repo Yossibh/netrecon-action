@@ -59,6 +59,35 @@ export function diffSnapshots(before: TrackedSnapshot, after: TrackedSnapshot): 
 
   scalar(changes, 'cdn.vendor', before.cdn.vendor, after.cdn.vendor, 'warning');
 
+  // Whois / RDAP: domain expiry crosses same thresholds as TLS.
+  if (before.whois.daysUntilExpiry !== after.whois.daysUntilExpiry) {
+    let sev: Severity = 'info';
+    const a = after.whois.daysUntilExpiry;
+    if (a != null) {
+      if (a < 14) sev = 'critical';
+      else if (a < 60) sev = 'warning';
+    }
+    changes.push({
+      field: 'whois.daysUntilExpiry',
+      before: before.whois.daysUntilExpiry,
+      after: after.whois.daysUntilExpiry,
+      severity: sev,
+      note: a != null && a < 14 ? 'domain expires in <14d' : undefined,
+    });
+  }
+  scalar(changes, 'whois.registrar', before.whois.registrar, after.whois.registrar, 'warning');
+  if (before.whois.registrarLocked !== after.whois.registrarLocked) {
+    // lock disappearing is the concerning case
+    const lostLock = before.whois.registrarLocked === true && after.whois.registrarLocked === false;
+    changes.push({
+      field: 'whois.registrarLocked',
+      before: before.whois.registrarLocked,
+      after: after.whois.registrarLocked,
+      severity: lostLock ? 'critical' : 'info',
+      note: lostLock ? 'registrar lock was removed' : undefined,
+    });
+  }
+
   return changes;
 }
 

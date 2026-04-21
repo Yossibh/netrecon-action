@@ -11,8 +11,38 @@ function baseSnap(): TrackedSnapshot {
     http: { statusCode: 200, finalUrl: 'https://example.com/' },
     email: { spfPresent: true, dmarcPolicy: 'reject' },
     cdn: { vendor: 'Cloudflare' },
+    whois: { daysUntilExpiry: 365, registrar: 'Example Registrar', registrarLocked: true },
   };
 }
+
+describe('diffSnapshots whois', () => {
+  it('flags domain expiring in <14 days as critical', () => {
+    const b = baseSnap();
+    const a = baseSnap();
+    a.whois.daysUntilExpiry = 10;
+    expect(highestSeverity(diffSnapshots(b, a))).toBe('critical');
+  });
+  it('flags domain expiring in 14-59 days as warning', () => {
+    const b = baseSnap();
+    const a = baseSnap();
+    a.whois.daysUntilExpiry = 40;
+    expect(highestSeverity(diffSnapshots(b, a))).toBe('warning');
+  });
+  it('flags registrar change as warning', () => {
+    const b = baseSnap();
+    const a = baseSnap();
+    a.whois.registrar = 'Other Registrar';
+    const changes = diffSnapshots(b, a);
+    expect(changes.find((c) => c.field === 'whois.registrar')?.severity).toBe('warning');
+  });
+  it('flags registrar lock removal as critical', () => {
+    const b = baseSnap();
+    const a = baseSnap();
+    a.whois.registrarLocked = false;
+    const changes = diffSnapshots(b, a);
+    expect(changes.find((c) => c.field === 'whois.registrarLocked')?.severity).toBe('critical');
+  });
+});
 
 describe('diffSnapshots', () => {
   it('returns empty for identical snapshots', () => {

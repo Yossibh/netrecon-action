@@ -31,6 +31,13 @@ export function extractSnapshot(input: string, raw: unknown): TrackedSnapshot {
   const http = (r.http ?? {}) as Record<string, any>;
   const email = (r.email ?? {}) as Record<string, any>;
   const cdn = (r.cdn ?? {}) as Record<string, any>;
+  const rdap = (r.rdap ?? r.modules?.rdap ?? {}) as Record<string, any>;
+
+  const rdapStatuses: string[] = Array.isArray(rdap.status) ? rdap.status.map(String) : [];
+  const registrarLocked = rdapStatuses.length === 0
+    ? null
+    : rdapStatuses.some((s) => /client transfer prohibited/i.test(s)) ||
+      rdapStatuses.some((s) => /client update prohibited/i.test(s));
 
   const sortStr = (v: unknown): string[] => {
     if (!Array.isArray(v)) return [];
@@ -71,6 +78,11 @@ export function extractSnapshot(input: string, raw: unknown): TrackedSnapshot {
     },
     cdn: {
       vendor: cdn?.vendor ?? cdn?.name ?? null,
+    },
+    whois: {
+      daysUntilExpiry: typeof rdap.daysUntilExpiry === 'number' ? rdap.daysUntilExpiry : null,
+      registrar: typeof rdap.registrar === 'string' ? rdap.registrar : null,
+      registrarLocked,
     },
   };
 }

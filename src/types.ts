@@ -44,6 +44,11 @@ export interface TrackedSnapshot {
   cdn: {
     vendor: string | null;
   };
+  whois: {
+    daysUntilExpiry: number | null;
+    registrar: string | null;
+    registrarLocked: boolean | null;
+  };
 }
 
 export interface StateFile {

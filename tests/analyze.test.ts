@@ -9,6 +9,11 @@ describe('extractSnapshot', () => {
       http: { status: { code: 200, finalUrl: 'https://example.com/' } },
       email: { spf: { present: true }, dmarc: { policy: 'reject' } },
       cdn: { vendor: 'Cloudflare' },
+      rdap: {
+        daysUntilExpiry: 365,
+        registrar: 'Example Registrar',
+        status: ['client transfer prohibited'],
+      },
     };
     const s = extractSnapshot('example.com', raw);
     expect(s.dns.a).toEqual(['1.2.3.4']);
@@ -18,6 +23,9 @@ describe('extractSnapshot', () => {
     expect(s.http.statusCode).toBe(200);
     expect(s.email.dmarcPolicy).toBe('reject');
     expect(s.cdn.vendor).toBe('Cloudflare');
+    expect(s.whois.daysUntilExpiry).toBe(365);
+    expect(s.whois.registrar).toBe('Example Registrar');
+    expect(s.whois.registrarLocked).toBe(true);
   });
 
   it('degrades gracefully for empty report', () => {
