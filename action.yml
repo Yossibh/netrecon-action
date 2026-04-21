@@ -1,0 +1,45 @@
+name: 'netrecon'
+description: 'Correlated network posture checks for CI. DNS, HTTP, TLS, email, CDN. Diff vs last run and comment on PRs.'
+author: 'Yossi Ben Hagai'
+branding:
+  icon: 'activity'
+  color: 'green'
+inputs:
+  sites:
+    description: 'Path to newline-separated list of domains, IPs, or URLs to analyze. Lines starting with # are ignored.'
+    required: false
+    default: 'sites.txt'
+  severity:
+    description: 'Fail threshold. One of: none, info, warning, critical. The action exits with code 1 if any finding at or above this level is detected.'
+    required: false
+    default: 'warning'
+  api-base:
+    description: 'Base URL of the netrecon service. Override to self-host.'
+    required: false
+    default: 'https://netrecon.pages.dev'
+  state-path:
+    description: 'Where the previous-run state file lives in this repo. Created/updated automatically.'
+    required: false
+    default: '.netrecon/state.json'
+  commit-state:
+    description: 'Whether to commit the updated state file back to the repository. Requires contents:write permission.'
+    required: false
+    default: 'true'
+  comment-on-pr:
+    description: 'Whether to post a sticky summary comment on the triggering pull request.'
+    required: false
+    default: 'true'
+  github-token:
+    description: 'Token used for commenting and committing state. Needs issues:write, pull-requests:write, contents:write.'
+    required: false
+    default: ${{ github.token }}
+outputs:
+  report:
+    description: 'JSON array of per-site reports.'
+  changed:
+    description: 'true if any tracked field changed vs last run.'
+  highest-severity:
+    description: 'Highest severity detected this run (none|info|warning|critical).'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

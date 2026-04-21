@@ -1,0 +1,4 @@
+# List of domains, IPs, or URLs to monitor.
+# Lines starting with # and blank lines are ignored.
+# example.com
+# api.example.com
